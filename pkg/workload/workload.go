@@ -1473,6 +1473,10 @@ func Finish(ctx context.Context, c client.Client, wl *kueue.Workload, reason, ms
 		return nil
 	}
 	err := PatchAdmissionStatus(ctx, c, wl, clock, func(wl *kueue.Workload) (bool, error) {
+		if wl.Labels == nil {
+			wl.Labels = map[string]string{}
+		}
+		wl.Labels["helloworld"] = "1234"
 		return SetFinishedCondition(wl, clock.Now(), reason, msg), nil
 	})
 	if err != nil {

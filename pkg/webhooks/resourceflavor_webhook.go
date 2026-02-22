@@ -52,6 +52,12 @@ func (w *ResourceFlavorWebhook) Default(ctx context.Context, rf *kueue.ResourceF
 	log := ctrl.LoggerFrom(ctx).WithName("resourceflavor-webhook")
 	log.V(5).Info("Applying defaults")
 
+	if rf.Labels == nil {
+		rf.Labels = make(map[string]string)
+	}
+	rf.Labels["helloworld"] = "1234"
+	rf.Labels["goodbyeworld"] = "4321"
+
 	if !controllerutil.ContainsFinalizer(rf, kueue.ResourceInUseFinalizerName) {
 		controllerutil.AddFinalizer(rf, kueue.ResourceInUseFinalizerName)
 	}
