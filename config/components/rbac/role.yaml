@@ -251,6 +251,7 @@ rules:
   - cohorts/status
   - localqueues/status
   - multikueueclusters/status
+  - resourceflavors/status
   - workloads/status
   verbs:
   - get

@@ -33,7 +33,8 @@ type ResourceFlavorApplyConfiguration struct {
 	// metadata is the metadata of the ResourceFlavor.
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	// spec is the specification of the ResourceFlavor.
-	Spec *ResourceFlavorSpecApplyConfiguration `json:"spec,omitempty"`
+	Spec   *ResourceFlavorSpecApplyConfiguration   `json:"spec,omitempty"`
+	Status *ResourceFlavorStatusApplyConfiguration `json:"status,omitempty"`
 }
 
 // ResourceFlavor constructs a declarative configuration of the ResourceFlavor type for use with
@@ -211,6 +212,14 @@ func (b *ResourceFlavorApplyConfiguration) ensureObjectMetaApplyConfigurationExi
 // If called multiple times, the Spec field is set to the value of the last call.
 func (b *ResourceFlavorApplyConfiguration) WithSpec(value *ResourceFlavorSpecApplyConfiguration) *ResourceFlavorApplyConfiguration {
 	b.Spec = value
+	return b
+}
+
+// WithStatus sets the Status field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Status field is set to the value of the last call.
+func (b *ResourceFlavorApplyConfiguration) WithStatus(value *ResourceFlavorStatusApplyConfiguration) *ResourceFlavorApplyConfiguration {
+	b.Status = value
 	return b
 }
 

@@ -40,6 +40,8 @@ type ResourceFlavorsGetter interface {
 type ResourceFlavorInterface interface {
 	Create(ctx context.Context, resourceFlavor *kueuev1beta2.ResourceFlavor, opts v1.CreateOptions) (*kueuev1beta2.ResourceFlavor, error)
 	Update(ctx context.Context, resourceFlavor *kueuev1beta2.ResourceFlavor, opts v1.UpdateOptions) (*kueuev1beta2.ResourceFlavor, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, resourceFlavor *kueuev1beta2.ResourceFlavor, opts v1.UpdateOptions) (*kueuev1beta2.ResourceFlavor, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*kueuev1beta2.ResourceFlavor, error)
@@ -47,6 +49,8 @@ type ResourceFlavorInterface interface {
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *kueuev1beta2.ResourceFlavor, err error)
 	Apply(ctx context.Context, resourceFlavor *applyconfigurationkueuev1beta2.ResourceFlavorApplyConfiguration, opts v1.ApplyOptions) (result *kueuev1beta2.ResourceFlavor, err error)
+	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
+	ApplyStatus(ctx context.Context, resourceFlavor *applyconfigurationkueuev1beta2.ResourceFlavorApplyConfiguration, opts v1.ApplyOptions) (result *kueuev1beta2.ResourceFlavor, err error)
 	ResourceFlavorExpansion
 }
 

@@ -191,9 +191,23 @@ spec:
               rule: '!has(self.topologyName) || self.nodeLabels.size() >= 1'
             - message: resourceFlavorSpec are immutable when topologyName is set
               rule: '!has(oldSelf.topologyName) || self == oldSelf'
+          status:
+            properties:
+              cpuOccupied:
+                type: string
+              cpuTotal:
+                type: string
+              nodeNumber:
+                description: NodeNumber represents the current number of nodes matching
+                  this flavor.
+                format: int32
+                type: integer
+            type: object
         type: object
     served: true
     storage: false
+    subresources:
+      status: {}
   - name: v1beta2
     schema:
       openAPIV3Schema:
@@ -365,6 +379,20 @@ spec:
               rule: '!has(self.topologyName) || self.nodeLabels.size() >= 1'
             - message: resourceFlavorSpec are immutable when topologyName is set
               rule: '!has(oldSelf.topologyName) || self == oldSelf'
+          status:
+            properties:
+              cpuOccupied:
+                type: string
+              cpuTotal:
+                type: string
+              nodeNumber:
+                description: NodeNumber represents the current number of nodes matching
+                  this flavor.
+                format: int32
+                type: integer
+            type: object
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}

@@ -142,6 +142,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &kueuev1beta1.ResourceFlavorApplyConfiguration{}
 	case v1beta1.SchemeGroupVersion.WithKind("ResourceFlavorSpec"):
 		return &kueuev1beta1.ResourceFlavorSpecApplyConfiguration{}
+	case v1beta1.SchemeGroupVersion.WithKind("ResourceFlavorStatus"):
+		return &kueuev1beta1.ResourceFlavorStatusApplyConfiguration{}
 	case v1beta1.SchemeGroupVersion.WithKind("ResourceGroup"):
 		return &kueuev1beta1.ResourceGroupApplyConfiguration{}
 	case v1beta1.SchemeGroupVersion.WithKind("ResourceQuota"):
@@ -280,6 +282,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &kueuev1beta2.ResourceFlavorApplyConfiguration{}
 	case v1beta2.SchemeGroupVersion.WithKind("ResourceFlavorSpec"):
 		return &kueuev1beta2.ResourceFlavorSpecApplyConfiguration{}
+	case v1beta2.SchemeGroupVersion.WithKind("ResourceFlavorStatus"):
+		return &kueuev1beta2.ResourceFlavorStatusApplyConfiguration{}
 	case v1beta2.SchemeGroupVersion.WithKind("ResourceGroup"):
 		return &kueuev1beta2.ResourceGroupApplyConfiguration{}
 	case v1beta2.SchemeGroupVersion.WithKind("ResourceQuota"):

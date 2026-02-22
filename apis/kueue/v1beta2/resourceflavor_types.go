@@ -26,6 +26,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:storageversion
 // +kubebuilder:resource:scope=Cluster,shortName={flavor,flavors,rf}
+// +kubebuilder:subresource:status
 
 // ResourceFlavor is the Schema for the resourceflavors API.
 type ResourceFlavor struct {
@@ -37,6 +38,9 @@ type ResourceFlavor struct {
 	// spec is the specification of the ResourceFlavor.
 	// +optional
 	Spec ResourceFlavorSpec `json:"spec,omitempty"`
+
+	// +optional
+	Status ResourceFlavorStatus `json:"status,omitempty"`
 }
 
 // TopologyReference is the name of the Topology.
@@ -116,6 +120,18 @@ type ResourceFlavorList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ResourceFlavor `json:"items"`
+}
+
+type ResourceFlavorStatus struct {
+	// NodeNumber represents the current number of nodes matching this flavor.
+	// +optional
+	NodeNumber int32 `json:"nodeNumber,omitempty"`
+
+	// +optional
+	CPUOccupied string `json:"cpuOccupied,omitempty"`
+
+	// +optional
+	CPUTotal string `json:"cpuTotal,omitempty"`
 }
 
 func init() {

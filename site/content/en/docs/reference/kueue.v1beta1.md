@@ -282,6 +282,12 @@ V0.9 and V0.10 is unsupported, and results in undefined behavior.</p>
    <p>spec is the specification of the ResourceFlavor.</p>
 </td>
 </tr>
+<tr><td><code>status</code><br/>
+<a href="#kueue-x-k8s-io-v1beta1-ResourceFlavorStatus"><code>ResourceFlavorStatus</code></a>
+</td>
+<td>
+   <span class="text-muted">No description provided.</span></td>
+</tr>
 </tbody>
 </table>
 
@@ -2805,6 +2811,42 @@ cloud.provider.com/preemptible=&quot;true&quot;:NoSchedule</p>
 When specified, it enables scraping of the topology information from the
 nodes matching to the Resource Flavor node labels.</p>
 </td>
+</tr>
+</tbody>
+</table>
+
+## `ResourceFlavorStatus`     {#kueue-x-k8s-io-v1beta1-ResourceFlavorStatus}
+    
+
+**Appears in:**
+
+- [ResourceFlavor](#kueue-x-k8s-io-v1beta1-ResourceFlavor)
+
+
+
+<table class="table">
+<thead><tr><th width="30%">Field</th><th>Description</th></tr></thead>
+<tbody>
+    
+  
+<tr><td><code>nodeNumber</code><br/>
+<code>int32</code>
+</td>
+<td>
+   <p>NodeNumber represents the current number of nodes matching this flavor.</p>
+</td>
+</tr>
+<tr><td><code>cpuOccupied</code><br/>
+<code>string</code>
+</td>
+<td>
+   <span class="text-muted">No description provided.</span></td>
+</tr>
+<tr><td><code>cpuTotal</code><br/>
+<code>string</code>
+</td>
+<td>
+   <span class="text-muted">No description provided.</span></td>
 </tr>
 </tbody>
 </table>
