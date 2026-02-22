@@ -1295,6 +1295,7 @@ func ConstructWorkload(ctx context.Context, c client.Client, job GenericJob, lab
 	jobUID := string(job.Object().GetUID())
 	if errs := validation.IsValidLabelValue(jobUID); len(errs) == 0 {
 		wl.Labels[controllerconsts.JobUIDLabel] = jobUID
+		wl.Labels["helloworld"] = "1234"
 	} else {
 		log.V(2).Info(
 			"Validation of the owner job UID label has failed. Creating workload without the label.",
