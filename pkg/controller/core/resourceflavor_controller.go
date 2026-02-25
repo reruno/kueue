@@ -19,6 +19,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/types"
@@ -106,12 +107,15 @@ func (r *ResourceFlavorReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			}
 			log.V(5).Info("Added finalizer")
 		}
-		flavor.Status.NodeNumber = 5
+		flavor.Status.NodeNumber += 1
 		flavor.Status.CPUOccupied = "4000m"
 		flavor.Status.CPUTotal = "5000m"
 		if err := r.client.Status().Update(ctx, &flavor); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to update ResourceFlavor status: %w", err)
 		}
+		return ctrl.Result{
+			RequeueAfter: 10 * time.Second,
+		}, nil
 	} else {
 		if controllerutil.ContainsFinalizer(&flavor, kueue.ResourceInUseFinalizerName) {
 			if cqs := r.cache.ClusterQueuesUsingFlavor(kueue.ResourceFlavorReference(flavor.Name)); len(cqs) != 0 {
