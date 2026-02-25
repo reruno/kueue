@@ -19,9 +19,10 @@ package core
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/util/workqueue"
@@ -107,15 +108,28 @@ func (r *ResourceFlavorReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			}
 			log.V(5).Info("Added finalizer")
 		}
-		flavor.Status.NodeNumber += 1
-		flavor.Status.CPUOccupied = "4000m"
-		flavor.Status.CPUTotal = "5000m"
+		nodes, err := r.GetNodes(ctx, &flavor)
+		if err != nil {
+			log.Error(err, "Failed to get nodes for ResourceFlavor")
+			return ctrl.Result{}, err
+		}
+
+		occupiedCPU, err := r.GetCPUOccupied(ctx, nodes)
+		if err != nil {
+			log.Error(err, "Failed to calculate occupied CPU")
+			return ctrl.Result{}, err
+		}
+
+		totalCPU := r.GetCPUTotal(ctx, nodes)
+
+		// Update Status
+		flavor.Status.NodeNumber = int32(len(nodes))
+		flavor.Status.CPUTotal = totalCPU.String()
+		flavor.Status.CPUOccupied = occupiedCPU.String()
 		if err := r.client.Status().Update(ctx, &flavor); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to update ResourceFlavor status: %w", err)
 		}
-		return ctrl.Result{
-			RequeueAfter: 10 * time.Second,
-		}, nil
+		return ctrl.Result{}, nil
 	} else {
 		if controllerutil.ContainsFinalizer(&flavor, kueue.ResourceInUseFinalizerName) {
 			if cqs := r.cache.ClusterQueuesUsingFlavor(kueue.ResourceFlavorReference(flavor.Name)); len(cqs) != 0 {
@@ -135,6 +149,79 @@ func (r *ResourceFlavorReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// mapPodToFlavors triggers a reconciliation for all ResourceFlavors when a Pod changes.
+func (r *ResourceFlavorReconciler) mapPodToFlavors(ctx context.Context, obj client.Object) []reconcile.Request {
+	var flavors kueue.ResourceFlavorList
+	if err := r.client.List(ctx, &flavors); err != nil {
+		return nil
+	}
+
+	var requests []reconcile.Request
+	for _, f := range flavors.Items {
+		requests = append(requests, reconcile.Request{
+			NamespacedName: types.NamespacedName{Name: f.Name},
+		})
+	}
+	return requests
+}
+
+// GetNodes returns all nodes tied to the ResourceFlavor.
+// If flavor.NodeLabels is empty, it returns all nodes in the cluster.
+func (r *ResourceFlavorReconciler) GetNodes(ctx context.Context, flavor *kueue.ResourceFlavor) ([]corev1.Node, error) {
+	var nodeList corev1.NodeList
+	var listOpts []client.ListOption
+
+	// If the flavor has node labels, use them to filter the nodes
+	if len(flavor.Spec.NodeLabels) > 0 {
+		listOpts = append(listOpts, client.MatchingLabels(flavor.Spec.NodeLabels))
+	}
+
+	if err := r.client.List(ctx, &nodeList, listOpts...); err != nil {
+		return nil, err
+	}
+	return nodeList.Items, nil
+}
+
+// GetCPUTotal calculates the total allocatable CPU of all nodes tied to the flavor
+func (r *ResourceFlavorReconciler) GetCPUTotal(ctx context.Context, nodes []corev1.Node) resource.Quantity {
+	totalCPU := resource.NewMilliQuantity(0, resource.DecimalSI)
+	for _, node := range nodes {
+		if cpu := node.Status.Allocatable.Cpu(); cpu != nil {
+			totalCPU.Add(*cpu)
+		}
+	}
+	return *totalCPU
+}
+
+// GetCPUOccupied calculates the total CPU requested by Running Pods on the flavor's nodes
+func (r *ResourceFlavorReconciler) GetCPUOccupied(ctx context.Context, nodes []corev1.Node) (resource.Quantity, error) {
+	totalOccupied := resource.NewMilliQuantity(0, resource.DecimalSI)
+
+	// Create a fast lookup map for our nodes
+	nodeMap := make(map[string]bool)
+	for _, n := range nodes {
+		nodeMap[n.Name] = true
+	}
+
+	// List all pods
+	var podList corev1.PodList
+	if err := r.client.List(ctx, &podList); err != nil {
+		return *totalOccupied, err
+	}
+
+	for _, pod := range podList.Items {
+		// Only count running pods that are scheduled on the nodes belonging to this flavor
+		if pod.Status.Phase == corev1.PodRunning && nodeMap[pod.Spec.NodeName] {
+			for _, container := range pod.Spec.Containers {
+				if req := container.Resources.Requests.Cpu(); req != nil {
+					totalOccupied.Add(*req)
+				}
+			}
+		}
+	}
+	return *totalOccupied, nil
 }
 
 func (r *ResourceFlavorReconciler) AddUpdateWatcher(watchers ...ResourceFlavorUpdateWatcher) {
@@ -275,6 +362,10 @@ func (r *ResourceFlavorReconciler) SetupWithManager(mgr ctrl.Manager, cfg *confi
 			&handler.TypedEnqueueRequestForObject[*kueue.ResourceFlavor]{},
 			r,
 		)).
+		Watches(
+			&corev1.Pod{},
+			handler.EnqueueRequestsFromMapFunc(r.mapPodToFlavors),
+		).
 		WithOptions(controller.Options{
 			NeedLeaderElection:      ptr.To(false),
 			MaxConcurrentReconciles: mgr.GetControllerOptions().GroupKindConcurrency[kueue.GroupVersion.WithKind("ResourceFlavor").GroupKind().String()],
