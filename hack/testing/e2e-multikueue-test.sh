@@ -45,6 +45,10 @@ function cleanup {
     cluster_collect_artifacts "$WORKER2_KIND_CLUSTER_NAME" "$WORKER2_KUBECONFIG" &
     wait
 
+    if e2e_should_skip_reinstall; then
+        echo "E2E_SKIP_REINSTALL is enabled: this run may have reused existing Kueue controller deployments."
+    fi
+
     if e2e_should_delete_cluster; then
         # Run cleanup sequentially to prevent kubeconfig lock collisions
         cluster_cleanup "$MANAGER_KIND_CLUSTER_NAME" 

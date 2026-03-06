@@ -33,6 +33,9 @@ fi
 # When set (truthy), external operators are forcefully re-installed_version even in E2E_MODE=dev.
 export E2E_ENFORCE_OPERATOR_UPDATE="${E2E_ENFORCE_OPERATOR_UPDATE:-false}"
 
+# When truthy, skip Kueue re-install if controller deployment already exists.
+export E2E_SKIP_REINSTALL="${E2E_SKIP_REINSTALL:-false}"
+
 export KIND_VERSION="${E2E_KIND_VERSION/"kindest/node:v"/}"
 
 function e2e_is_truthy {
@@ -248,7 +251,7 @@ function ensure_kind_cluster {
             return 0
         fi
 
-        echo "Creating kind cluster (E2E_MODE=dev): $name"
+        echo "Creating kind cluster x (E2E_MODE=dev): $name"
         cluster_create "$name" "$cfg" "$kubeconfig"
         return 0
     fi
@@ -264,6 +267,15 @@ function ensure_kind_cluster {
 # $1 cluster name
 function e2e_should_delete_cluster {
     [[ "${E2E_MODE}" != "dev" ]]
+}
+
+# returns
+# 0 (true) if E2E_SKIP_REINSTALL = true
+# 1 (false) if E2E_SKIP_REINSTALL = false
+function e2e_should_skip_reinstall {
+    # inverted because e2e_is_truthy returns 0 (success code) on E2E_SKIP_REINSTALL=false 
+    # and 1 (error code) on E2E_SKIP_REINSTALL=true
+    ! e2e_is_truthy "${E2E_SKIP_REINSTALL}"; 
 }
 
 # Patches a kind config file with DRA-specific settings.
@@ -543,6 +555,17 @@ function cluster_kueue_deploy {
         upgrade_test_flow "$1"
         return
     fi
+
+    if e2e_should_skip_reinstall; then
+        if e2e_deployment_exists "$1" "${KUEUE_NAMESPACE}" "kueue-controller-manager"; then
+            echo "Kueue controller already exists in namespace '${KUEUE_NAMESPACE}', skipping reinstall (E2E_SKIP_REINSTALL=${E2E_SKIP_REINSTALL})."
+            return
+        fi
+        echo "E2E_SKIP_REINSTALL is enabled but Kueue is not deployed yet; proceeding with install."
+    else
+        echo "E2E_SKIP_REINSTALL=${E2E_SKIP_REINSTALL} is disabled; proceeding with install regardless of existing deployment."
+    fi
+
     # Normal deployment flows
     if [[ -n ${CERTMANAGER_VERSION:-} ]]; then
         kubectl -n cert-manager wait --for condition=ready pod \

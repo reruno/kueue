@@ -31,6 +31,10 @@ function cleanup {
 
     cluster_collect_artifacts "$KIND_CLUSTER_NAME" ""
 
+    if e2e_should_skip_reinstall; then
+        echo "E2E_SKIP_REINSTALL is enabled: this run may have reused an existing Kueue controller deployment."
+    fi
+
     if e2e_should_delete_cluster; then
         cluster_cleanup "$KIND_CLUSTER_NAME"
     else
